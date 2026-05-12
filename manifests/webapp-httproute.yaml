@@ -1,0 +1,22 @@
+# HTTPRoute for the webapp asset.
+# Applied via cod config add -t onpostdeploy on the webapp asset (cabinet scope).
+# ${cabinet.namespace} is resolved by the Codiac relay's token substitution engine
+# (codiac-relay/src/utils/view-engine.ts performTokenReplacements) at deploy time.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: webapp-route
+  namespace: ${cabinet.namespace}
+spec:
+  parentRefs:
+  - name: codiac-gateway
+    namespace: nginx-gateway
+    sectionName: http
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: webapp
+      port: 80

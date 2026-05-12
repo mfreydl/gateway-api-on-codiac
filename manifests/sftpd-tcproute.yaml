@@ -1,0 +1,18 @@
+# TCPRoute for the sftpd asset.
+# Applied via cod config add -t onpostdeploy on the sftpd asset (cabinet scope).
+# ${cabinet.namespace} is resolved by the Codiac relay's token substitution engine
+# (codiac-relay/src/utils/view-engine.ts performTokenReplacements) at deploy time.
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: sftpd-route
+  namespace: ${cabinet.namespace}
+spec:
+  parentRefs:
+  - name: codiac-gateway
+    namespace: nginx-gateway
+    sectionName: tcp-sftp
+  rules:
+  - backendRefs:
+    - name: sftpd
+      port: 22

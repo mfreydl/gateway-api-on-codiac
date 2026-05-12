@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:docs.codiac.io)",
+      "WebFetch(domain:gateway-api.sigs.k8s.io)",
+      "WebFetch(domain:grok.com)",
+      "WebFetch(domain:www.codiac.io)",
+      "WebFetch(domain:gateway.envoyproxy.io)",
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\MArk\\\\Documents\\\\_dev\\\\codiac\\\\public-documentation\\\\build\" -ErrorAction SilentlyContinue | Select-Object -First 5 Name; if \\(-not \\(Test-Path \"c:\\\\Users\\\\MArk\\\\Documents\\\\_dev\\\\codiac\\\\public-documentation\\\\build\"\\)\\) { \"build folder missing\" }; if \\(Test-Path \"c:\\\\Users\\\\MArk\\\\Documents\\\\_dev\\\\codiac\\\\public-documentation\\\\.gitignore\"\\) { Get-Content \"c:\\\\Users\\\\MArk\\\\Documents\\\\_dev\\\\codiac\\\\public-documentation\\\\.gitignore\" } else { \"no .gitignore\" })",
+      "PowerShell($buildPath = \"c:\\\\Users\\\\MArk\\\\Documents\\\\_dev\\\\codiac\\\\public-documentation\\\\build\"; $giPath = \"c:\\\\Users\\\\MArk\\\\Documents\\\\_dev\\\\codiac\\\\public-documentation\\\\.gitignore\"; Write-Output \"build exists: $\\(Test-Path $buildPath\\)\"; Write-Output \"gitignore exists: $\\(Test-Path $giPath\\)\"; if \\(Test-Path $giPath\\) { Get-Content $giPath })"
+    ]
+  }
+}
