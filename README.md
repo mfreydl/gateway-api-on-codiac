@@ -37,7 +37,7 @@ Codiac Tenant: gateway-poc
 │           ├── helm values:  NGF controller config + GatewayClass
 │           └── onPostDeploy: apply Gateway CR  (HTTP :80 + TCP :22 listeners)
 │
-└── gateway-poc-apps enterprise  (SDLC)
+└── main enterprise  (SDLC — built-in, no create needed)
     ├── webapp  (service asset: nginx:alpine)
     │   └── onPostDeploy: apply HTTPRoute → webapp service
     └── sftpd   (service asset: atmoz/sftp)
@@ -210,14 +210,13 @@ cod cluster bootstrap my-gateway-cluster \
 
 ---
 
-## Phase 3 — SDLC Enterprise and Assets
+## Phase 3 — SDLC Assets
+
+> The `main` enterprise is built-in to every Codiac tenant — no `enterprise create` needed.
 
 ```bash
-# Create the SDLC enterprise
-cod enterprise create --name gateway-poc-apps
-
 # Register the web server asset (nginx:alpine from Docker Hub)
-cod asset create -e gateway-poc-apps \
+cod asset create -e main \
   --name webapp \
   --type service \
   --image "nginx:alpine" \
@@ -225,7 +224,7 @@ cod asset create -e gateway-poc-apps \
   --no-ingress
 
 # Register the SFTP server asset (atmoz/sftp from Docker Hub)
-cod asset create -e gateway-poc-apps \
+cod asset create -e main \
   --name sftpd \
   --type service \
   --image "atmoz/sftp" \
@@ -239,7 +238,7 @@ cod asset create -e gateway-poc-apps \
 
 ```bash
 # Set SFTP users: format is "user:password:uid"
-cod config add -e gateway-poc-apps -a sftpd \
+cod config add -e main -a sftpd \
   -t env \
   --enterprise-scope \
   --setting "SFTP_USERS" \
@@ -255,7 +254,8 @@ cod config add -e gateway-poc-apps -a sftpd \
 The `onPostDeploy` config on the `webapp` asset applies an HTTPRoute that attaches to the shared Gateway and forwards all HTTP traffic to the webapp service.
 
 ```bash
-cod config add -e gateway-poc-apps -a webapp \
+cod config add -e main -a webapp \
+  -c dev-01 \
   -t onpostdeploy \
   --setting "01-http-route" \
   --value-stdin < manifests/webapp-httproute.yaml
@@ -264,7 +264,8 @@ cod config add -e gateway-poc-apps -a webapp \
 ### 4b. TCPRoute for sftpd
 
 ```bash
-cod config add -e gateway-poc-apps -a sftpd \
+cod config add -e main -a sftpd \
+  -c dev-01 \
   -t onpostdeploy \
   --setting "01-tcp-route" \
   --value-stdin < manifests/sftpd-tcproute.yaml
@@ -276,15 +277,15 @@ cod config add -e gateway-poc-apps -a sftpd \
 
 ```bash
 # Create an environment
-cod env add --enterprise gateway-poc-apps --name dev
+cod env add --enterprise main --name dev
 
 # Create a cabinet and attach it to the cluster
-cod cabinet create --enterprise gateway-poc-apps --environment dev --name dev-01
-cod cabinet cluster attach --enterprise gateway-poc-apps --cabinet dev-01 --cluster my-gateway-cluster
+cod cabinet create --enterprise main --environment dev --name dev-01
+cod cabinet cluster attach --enterprise main --cabinet dev-01 --cluster my-gateway-cluster
 
 # Deploy
-cod cluster install my-gateway-cluster -a webapp -u latest
-cod cluster install my-gateway-cluster -a sftpd -u latest
+cod asset deploy -e main -a webapp -c dev-01 -u latest
+cod asset deploy -e main -a sftpd -c dev-01 -u latest
 ```
 
 ---
@@ -308,8 +309,8 @@ sftp -P 22 demouser@<EXTERNAL-IP>
 
 ```bash
 # Undeploy SDLC assets (routes are auto-deleted via onPostDeploy LIFO)
-cod asset undeploy -e gateway-poc-apps -a webapp -c dev-01
-cod asset undeploy -e gateway-poc-apps -a sftpd -c dev-01
+cod asset undeploy -e main -a webapp -c dev-01
+cod asset undeploy -e main -a sftpd -c dev-01
 
 # Destroy the cluster
 cod cluster destroy my-gateway-cluster

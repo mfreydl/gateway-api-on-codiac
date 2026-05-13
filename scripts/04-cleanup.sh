@@ -4,7 +4,7 @@
 # via the onPostDeploy LIFO teardown sequence in the Codiac relay.
 set -euo pipefail
 
-ENTERPRISE="gateway-poc-apps"
+ENTERPRISE="main"
 CLUSTER="my-gateway-cluster"
 CABINET="dev-01"
 

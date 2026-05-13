@@ -1,23 +1,18 @@
 #!/usr/bin/env bash
-# Phase 3: Create the SDLC enterprise, assets, environment, and cabinet.
-# Then configure routes and deploy.
-# NOTE: Replace <CABINET_NAMESPACE> in manifests before running the route configs.
+# Phase 3: Register SDLC assets in the built-in "main" enterprise,
+# create an environment and cabinet, configure routes, and deploy.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST_DIR="${SCRIPT_DIR}/../manifests"
 
-ENTERPRISE="gateway-poc-apps"
+ENTERPRISE="main"
 CLUSTER="my-gateway-cluster"
 ENV_NAME="dev"
 CABINET="dev-01"
 
 # -------------------------------------------------------------------------
-echo "=== Step 1: Create the SDLC enterprise ==="
-cod enterprise create --name "${ENTERPRISE}"
-
-# -------------------------------------------------------------------------
-echo "=== Step 2: Register the web server asset (nginx:alpine) ==="
+echo "=== Step 1: Register the web server asset (nginx:alpine) ==="
 cod asset create -e "${ENTERPRISE}" \
   --name webapp \
   --type service \
@@ -26,7 +21,7 @@ cod asset create -e "${ENTERPRISE}" \
   --no-ingress
 
 # -------------------------------------------------------------------------
-echo "=== Step 3: Register the SFTP server asset (atmoz/sftp) ==="
+echo "=== Step 2: Register the SFTP server asset (atmoz/sftp) ==="
 cod asset create -e "${ENTERPRISE}" \
   --name sftpd \
   --type service \
@@ -35,7 +30,7 @@ cod asset create -e "${ENTERPRISE}" \
   --no-ingress
 
 # -------------------------------------------------------------------------
-echo "=== Step 4: Configure SFTP user credentials ==="
+echo "=== Step 3: Configure SFTP user credentials ==="
 # Format: "username:password:uid[:gid[:dir1[,dir2],...]]"
 cod config add -e "${ENTERPRISE}" -a sftpd \
   -t env --enterprise-scope \
@@ -44,13 +39,13 @@ cod config add -e "${ENTERPRISE}" -a sftpd \
   --silent
 
 # -------------------------------------------------------------------------
-echo "=== Step 5: Create environment and cabinet ==="
+echo "=== Step 4: Create environment and cabinet ==="
 cod env add --enterprise "${ENTERPRISE}" --name "${ENV_NAME}"
 cod cabinet create --enterprise "${ENTERPRISE}" --environment "${ENV_NAME}" --name "${CABINET}"
 cod cabinet cluster attach --enterprise "${ENTERPRISE}" --cabinet "${CABINET}" --cluster "${CLUSTER}"
 
 # -------------------------------------------------------------------------
-echo "=== Step 6: Configure HTTPRoute for webapp (onPostDeploy, cabinet scope) ==="
+echo "=== Step 5: Configure HTTPRoute for webapp (onPostDeploy, cabinet scope) ==="
 # The manifest uses ${cabinet.namespace} — resolved at deploy time by the Codiac relay.
 cod config add -e "${ENTERPRISE}" -a webapp \
   -c "${CABINET}" \
@@ -60,7 +55,7 @@ cod config add -e "${ENTERPRISE}" -a webapp \
   --silent
 
 # -------------------------------------------------------------------------
-echo "=== Step 7: Configure TCPRoute for sftpd (onPostDeploy, cabinet scope) ==="
+echo "=== Step 6: Configure TCPRoute for sftpd (onPostDeploy, cabinet scope) ==="
 cod config add -e "${ENTERPRISE}" -a sftpd \
   -c "${CABINET}" \
   -t onpostdeploy \
@@ -69,15 +64,16 @@ cod config add -e "${ENTERPRISE}" -a sftpd \
   --silent
 
 # -------------------------------------------------------------------------
-echo "=== Step 8: Deploy assets to the cluster ==="
-cod cluster install "${CLUSTER}" -e "${ENTERPRISE}" -a webapp -u latest --wait --silent
-cod cluster install "${CLUSTER}" -e "${ENTERPRISE}" -a sftpd -u latest --wait --silent
+echo "=== Step 7: Deploy assets ==="
+cod asset deploy -e "${ENTERPRISE}" -a webapp -c "${CABINET}" -u latest --wait --silent
+cod asset deploy -e "${ENTERPRISE}" -a sftpd -c "${CABINET}" -u latest --wait --silent
 
 echo ""
 echo "Done. Proceed to verification:"
+CABINET_NS="${ENTERPRISE}-${ENV_NAME}-${CABINET}"
 echo "  kubectl get gateway -n nginx-gateway"
-echo "  kubectl get httproute -n ${CABINET_NAMESPACE}"
-echo "  kubectl get tcproute -n ${CABINET_NAMESPACE}"
+echo "  kubectl get httproute -n ${CABINET_NS}"
+echo "  kubectl get tcproute -n ${CABINET_NS}"
 EXTERNAL_IP=$(kubectl get svc -n nginx-gateway -l app.kubernetes.io/name=nginx-gateway-fabric -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "<pending>")
 echo "  Gateway external IP: ${EXTERNAL_IP}"
 echo "  curl http://${EXTERNAL_IP}/"
