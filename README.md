@@ -115,7 +115,7 @@ cod asset obliterate -e k8sinfrx --silent -a ingress-nginx
 # (The image field uses Helm registry syntax: helm|oci|<repo-name>)
 cod asset create -e k8sinfrx \
   --name nginx-gateway-fabric \
-  --type helm \
+  --helm \
   --image "oci://ghcr.io/nginx/charts/nginx-gateway-fabric" \
   --port 80
 ```
