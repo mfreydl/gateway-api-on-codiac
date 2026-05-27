@@ -14,11 +14,12 @@ cod asset obliterate -e "${ENTERPRISE}" -a ingress-nginx --silent
 
 echo "=== Step 3: Register NGINX Gateway Fabric as a Helm asset ==="
 # NGINX Gateway Fabric OCI Helm chart: oci://ghcr.io/nginx/charts/nginx-gateway-fabric
-cod asset create -e "${ENTERPRISE}" \
-  --name "${ASSET_NGF}" \
+cod asset create --enterprise "${ENTERPRISE}" \
   --helm \
-  --image "oci://ghcr.io/nginx/charts/nginx-gateway-fabric" \
-  --port 80 \
+  --name "${ASSET_NGF}" \
+  --code "${ASSET_NGF}" \
+  --image nginx-gateway-fabric \
+  --registry helm|artifactHub|nginx-gateway-fabric \
   --silent
 
 echo "=== Step 4: Configure onPreDeploy — install Gateway API experimental CRDs ==="
