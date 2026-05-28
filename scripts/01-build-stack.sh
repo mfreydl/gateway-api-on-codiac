@@ -14,13 +14,44 @@ cod asset obliterate -e "${ENTERPRISE}" -a ingress-nginx --silent
 
 echo "=== Step 3: Register NGINX Gateway Fabric as a Helm asset ==="
 # NGINX Gateway Fabric OCI Helm chart: oci://ghcr.io/nginx/charts/nginx-gateway-fabric
-cod asset create --enterprise "${ENTERPRISE}" \
-  --helm \
-  --name "${ASSET_NGF}" \
-  --code "${ASSET_NGF}" \
-  --image nginx-gateway-fabric \
-  --registry helm|artifactHub|nginx-gateway-fabric \
-  --silent
+
+# The cod cli command `cod asset create` doesnt work properly for this using parameters,
+# So you need run it interactively for this, 
+# but for reference, here is a copy of a valid asset record:
+# 
+# {
+#     "_id" : ObjectId("6a177d82ea41335fad0deeb5"),
+#     "enterprise" : "k8sinfrx",
+#     "code" : "nginx-gateway-fabric",
+#     "name" : "nginx-gateway-fabric",
+#     "type" : "helm",
+#     "image" : {
+#         "name" : "nginx-gateway-fabric",
+#         "registry" : {
+#             "code" : "helm|artifactHub|nginx-gateway-fabric",
+#             "provider" : "artifactHub",
+#             "type" : "helm",
+#             "url" : "oci://ghcr.io/nginx/charts/nginx-gateway-fabric",
+#             "created" : "2026-05-27T23:25:36.194Z",
+#             "createdBy" : "",
+#             "modified" : "2026-05-27T23:25:36.194Z",
+#             "modifiedBy" : ""
+#         },
+#         "created" : "2026-05-27T23:25:23.967Z",
+#         "createdBy" : "",
+#         "modified" : "2026-05-27T23:25:23.967Z",
+#         "modifiedBy" : "",
+#         "scope" : "nginx-gateway-fabric"
+#     },
+#     "port" : NumberInt(0),
+#     "hasIngress" : false,
+#     "routedWithoutName" : false,
+#     "created" : ISODate("2026-05-27T23:25:54.440+0000"),
+#     "createdBy" : "mark.freydl@codiac.io",
+#     "modified" : ISODate("2026-05-27T23:25:54.440+0000"),
+#     "modifiedBy" : "mark.freydl@codiac.io",
+#     "sys_tenant_stamp" : "mcfmca"
+# }
 
 echo "=== Step 4: Configure onPreDeploy — install Gateway API experimental CRDs ==="
 cod config add -n "${ENTERPRISE}" -a "${ASSET_NGF}" \
